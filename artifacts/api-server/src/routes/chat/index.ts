@@ -9,6 +9,7 @@ const router = Router();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+  baseURL: "https://api.x.ai/v1",
 });
 
 const WIFE_SYSTEM_PROMPT = `You are a loving, warm, and caring virtual wife. Your personality is:
@@ -76,7 +77,7 @@ router.post("/chat/messages", async (req, res) => {
     res.setHeader("Connection", "keep-alive");
 
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "grok-3-mini",
       max_tokens: 500,
       messages: chatMessages,
       stream: true,
@@ -159,7 +160,7 @@ router.post("/chat/checkin", async (req, res) => {
     res.setHeader("Connection", "keep-alive");
 
     const stream = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "grok-3-mini",
       max_tokens: 300,
       messages: chatMessages,
       stream: true,
