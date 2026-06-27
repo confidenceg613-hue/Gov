@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,13 +9,14 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: chat
+    description: Chat operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +24,94 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /chat/messages:
+    get:
+      operationId: getMessages
+      tags: [chat]
+      summary: Get conversation history
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+
+    post:
+      operationId: sendMessage
+      tags: [chat]
+      summary: Send a message and get AI response (SSE streaming)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageInput"
+      responses:
+        "200":
+          description: SSE stream of response chunks
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /chat/messages/{id}:
+    delete:
+      operationId: deleteMessage
+      tags: [chat]
+      summary: Delete a message
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /chat/clear:
+    post:
+      operationId: clearChat
+      tags: [chat]
+      summary: Clear all chat history
+      responses:
+        "200":
+          description: Cleared
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClearResult"
+
+  /chat/checkin:
+    post:
+      operationId: dailyCheckin
+      tags: [chat]
+      summary: Trigger a daily check-in message from wife (SSE streaming)
+      responses:
+        "200":
+          description: SSE stream of check-in message
+          content:
+            text/event-stream:
+              schema:
+                type: string
+
+  /chat/stats:
+    get:
+      operationId: getChatStats
+      tags: [chat]
+      summary: Get chat statistics
+      responses:
+        "200":
+          description: Stats about the conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatStats"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +122,57 @@ components:
       required:
         - status
 
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+        createdAt:
+          type: string
+      required:
+        - id
+        - role
+        - content
+        - createdAt
+
+    MessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+          minLength: 1
+      required:
+        - content
+
+    ClearResult:
+      type: object
+      properties:
+        deleted:
+          type: integer
+      required:
+        - deleted
+
+    ChatStats:
+      type: object
+      properties:
+        totalMessages:
+          type: integer
+        userMessages:
+          type: integer
+        wifeMessages:
+          type: integer
+        firstMessageAt:
+          type: ["string", "null"]
+        lastMessageAt:
+          type: ["string", "null"]
+      required:
+        - totalMessages
+        - userMessages
+        - wifeMessages
+        - firstMessageAt
+        - lastMessageAt
