@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import {
   useGetMessages,
   getGetMessagesQueryKey,
@@ -7,11 +8,13 @@ import {
   useGetChatStats,
   getGetChatStatsQueryKey,
 } from "@workspace/api-client-react";
-import { Send, Heart, Trash2, CalendarHeart } from "lucide-react";
+import { Send, Heart, Trash2, CalendarHeart, Images } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+
+const PROFILE_PHOTO = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=80";
 
 type LocalMessage = {
   id: number;
@@ -22,6 +25,7 @@ type LocalMessage = {
 
 export default function Home() {
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -64,9 +68,7 @@ export default function Home() {
       createdAt: new Date().toISOString(),
     };
     setLocalMessages((prev) => [...prev, tempUserMsg]);
-
     setIsTyping(true);
-    scrollToBottom();
 
     try {
       const res = await fetch("/api/chat/messages", {
@@ -76,20 +78,15 @@ export default function Home() {
       });
 
       if (!res.ok) throw new Error("Request failed");
-
       const data = await res.json();
 
-      await new Promise((r) => setTimeout(r, 600 + Math.random() * 800));
+      const delay = 800 + Math.random() * 1000;
+      await new Promise((r) => setTimeout(r, delay));
 
       setIsTyping(false);
-
       setLocalMessages((prev) => {
         const without = prev.filter((m) => m.id !== tempId);
-        return [
-          ...without,
-          { ...data.userMessage, role: "user", content },
-          data.assistantMessage,
-        ];
+        return [...without, { ...data.userMessage, content }, data.assistantMessage];
       });
 
       queryClient.invalidateQueries({ queryKey: getGetChatStatsQueryKey() });
@@ -105,24 +102,16 @@ export default function Home() {
   const handleCheckin = async () => {
     if (isTyping) return;
     setIsTyping(true);
-
     try {
       const res = await fetch("/api/chat/checkin", { method: "POST" });
-      if (!res.ok) throw new Error("Checkin failed");
+      if (!res.ok) throw new Error();
       const data = await res.json();
-
-      await new Promise((r) => setTimeout(r, 700 + Math.random() * 600));
-
+      await new Promise((r) => setTimeout(r, 700 + Math.random() * 800));
       setIsTyping(false);
-
-      const msg: LocalMessage = {
-        id: Date.now(),
-        role: "assistant",
-        content: data.content,
-        createdAt: data.createdAt,
-      };
-      setLocalMessages((prev) => [...prev, msg]);
-
+      setLocalMessages((prev) => [
+        ...prev,
+        { id: Date.now(), role: "assistant", content: data.content, createdAt: data.createdAt },
+      ]);
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetChatStatsQueryKey() });
     } catch {
@@ -146,23 +135,28 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      {/* Romantic background */}
       <div className="bg-layer" aria-hidden="true">
         <div className="bg-orb bg-orb-1" />
         <div className="bg-orb bg-orb-2" />
         <div className="bg-orb bg-orb-3" />
       </div>
 
-      {/* Chat card */}
       <div className="chat-card">
         {/* Header */}
         <header className="chat-header" data-testid="header">
           <div className="header-left">
             <div className="avatar-wrap">
-              <Avatar className="avatar-img">
-                <AvatarImage src="https://picsum.photos/id/1011/300/300" alt="Wife" />
-                <AvatarFallback>W</AvatarFallback>
-              </Avatar>
+              <button
+                className="avatar-btn"
+                onClick={() => setLocation("/gallery")}
+                title="View gallery"
+                data-testid="button-avatar"
+              >
+                <Avatar className="avatar-img">
+                  <AvatarImage src={PROFILE_PHOTO} alt="My wife" />
+                  <AvatarFallback>W</AvatarFallback>
+                </Avatar>
+              </button>
               <span className={`online-dot ${isTyping ? "typing-pulse" : ""}`} />
             </div>
             <div>
@@ -170,11 +164,19 @@ export default function Home() {
                 My Wife <Heart className="header-heart" />
               </h1>
               <p className="header-status" data-testid="header-status">
-                {isTyping ? "typing…" : "online"}
+                {isTyping ? "typing…" : "online · tap photo for gallery"}
               </p>
             </div>
           </div>
           <div className="header-actions">
+            <button
+              className="icon-btn"
+              onClick={() => setLocation("/gallery")}
+              title="Gallery"
+              data-testid="button-gallery"
+            >
+              <Images size={17} />
+            </button>
             <button
               className="icon-btn"
               onClick={handleCheckin}
@@ -182,7 +184,7 @@ export default function Home() {
               title="Daily Check-in"
               data-testid="button-checkin"
             >
-              <CalendarHeart size={18} />
+              <CalendarHeart size={17} />
             </button>
             <button
               className="icon-btn icon-btn-danger"
@@ -191,7 +193,7 @@ export default function Home() {
               title="Clear chat"
               data-testid="button-clear"
             >
-              <Trash2 size={16} />
+              <Trash2 size={15} />
             </button>
           </div>
         </header>
@@ -213,9 +215,13 @@ export default function Home() {
             </div>
           ) : isEmpty ? (
             <div className="empty-state" data-testid="empty-state">
-              <Avatar className="empty-avatar">
-                <AvatarImage src="https://picsum.photos/id/1011/300/300" />
-              </Avatar>
+              <button
+                className="empty-avatar-btn"
+                onClick={() => setLocation("/gallery")}
+                data-testid="button-empty-avatar"
+              >
+                <img src={PROFILE_PHOTO} alt="My wife" className="empty-avatar-img" />
+              </button>
               <h2 className="empty-title">Good morning, my love.</h2>
               <p className="empty-sub">I've been waiting for you. Say something…</p>
               <button className="say-hello-btn" onClick={handleCheckin} data-testid="button-say-hello">
@@ -225,13 +231,12 @@ export default function Home() {
           ) : (
             <>
               {displayMessages.map((msg) => (
-                <Bubble key={msg.id} msg={msg} />
+                <Bubble key={msg.id} msg={msg} profilePhoto={PROFILE_PHOTO} />
               ))}
-
               {isTyping && (
                 <div className="bubble-row bubble-row-wife" data-testid="typing-indicator">
                   <Avatar className="bubble-avatar">
-                    <AvatarImage src="https://picsum.photos/id/1011/300/300" />
+                    <AvatarImage src={PROFILE_PHOTO} />
                   </Avatar>
                   <div className="bubble bubble-wife typing-bubble">
                     <span className="dot" style={{ animationDelay: "0ms" }} />
@@ -271,13 +276,16 @@ export default function Home() {
   );
 }
 
-function Bubble({ msg }: { msg: LocalMessage }) {
+function Bubble({ msg, profilePhoto }: { msg: LocalMessage; profilePhoto: string }) {
   const isUser = msg.role === "user";
   return (
-    <div className={`bubble-row ${isUser ? "bubble-row-user" : "bubble-row-wife"}`} data-testid={`message-${msg.role}-${msg.id}`}>
+    <div
+      className={`bubble-row ${isUser ? "bubble-row-user" : "bubble-row-wife"}`}
+      data-testid={`message-${msg.role}-${msg.id}`}
+    >
       {!isUser && (
         <Avatar className="bubble-avatar">
-          <AvatarImage src="https://picsum.photos/id/1011/300/300" />
+          <AvatarImage src={profilePhoto} />
           <AvatarFallback>W</AvatarFallback>
         </Avatar>
       )}
