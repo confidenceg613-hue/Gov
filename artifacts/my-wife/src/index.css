@@ -630,6 +630,33 @@
   line-height: 1.2;
 }
 
+/* Profile tags on empty state */
+.profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin: 8px 0 4px;
+}
+
+.profile-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.67rem;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: rgba(233, 30, 99, 0.13);
+  border: 1px solid rgba(233, 30, 99, 0.25);
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 0.01em;
+}
+
+.tag-heart {
+  color: #e91e63;
+}
+
 /* AI badge on gallery cells */
 .gallery-cell-ai { outline: 1px solid rgba(233, 30, 99, 0.4); }
 

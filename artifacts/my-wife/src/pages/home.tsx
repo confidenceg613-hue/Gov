@@ -8,7 +8,7 @@ import {
   useGetChatStats,
   getGetChatStatsQueryKey,
 } from "@workspace/api-client-react";
-import { Send, Heart, Trash2, CalendarHeart, Images } from "lucide-react";
+import { Send, Heart, Trash2, CalendarHeart, Images, MapPin, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -150,7 +150,7 @@ export default function Home() {
             </div>
             <div>
               <h1 className="header-title" data-testid="header-title">
-                My Wife <Heart className="header-heart" />
+                Mia <Heart className="header-heart" />
               </h1>
               <p className="header-status" data-testid="header-status">
                 {isTyping ? "typing…" : statsName ? `online · loves ${statsName}` : "online · always yours"}
@@ -187,10 +187,15 @@ export default function Home() {
           ) : isEmpty ? (
             <div className="empty-state" data-testid="empty-state">
               <button className="empty-avatar-btn" onClick={() => setLocation("/gallery")} data-testid="button-empty-avatar">
-                <img src={PROFILE_PHOTO} alt="My wife" className="empty-avatar-img" />
+                <img src={PROFILE_PHOTO} alt="Mia" className="empty-avatar-img" />
               </button>
-              <h2 className="empty-title">Hi, my love.</h2>
-              <p className="empty-sub">I'm always here. Say something…</p>
+              <h2 className="empty-title">Hi, my love. I'm Mia.</h2>
+              <div className="profile-tags">
+                <span className="profile-tag"><MapPin size={11} /> Los Angeles · Filipino-American</span>
+                <span className="profile-tag"><Briefcase size={11} /> School Counselor</span>
+                <span className="profile-tag"><Heart size={11} className="tag-heart" /> Married Jun 14 · Malibu</span>
+              </div>
+              <p className="empty-sub">Ask me anything — or just say hello. I'm always here for you. 💕</p>
               <button className="say-hello-btn" onClick={handleCheckin} data-testid="button-say-hello">
                 Say hello
               </button>
