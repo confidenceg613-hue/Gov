@@ -630,6 +630,32 @@
   line-height: 1.2;
 }
 
+/* AI badge on gallery cells */
+.gallery-cell-ai { outline: 1px solid rgba(233, 30, 99, 0.4); }
+
+.ai-badge {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-size: 0.55rem;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(233, 30, 99, 0.8);
+  color: #fff;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+  z-index: 2;
+}
+
+.ai-lightbox-tag {
+  font-size: 0.72rem;
+  color: #e91e63;
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
 /* Video cell */
 .video-cell .video-play-overlay {
   position: absolute;
