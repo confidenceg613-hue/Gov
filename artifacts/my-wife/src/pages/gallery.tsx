@@ -1,83 +1,130 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { X, ArrowLeft, ArrowRight, Heart } from "lucide-react";
+import { X, ArrowLeft, ArrowRight, Heart, Play } from "lucide-react";
 
-const PROFILE_PHOTO = "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&auto=format&fit=crop&q=80";
+const BASE = import.meta.env.BASE_URL;
+const H = (p: string) => `${BASE}her/${p}`;
 
-const OUTDOOR_PHOTOS = [
-  { id: "outdoor-1",  src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&auto=format&fit=crop&q=80", label: "Mountain escape" },
-  { id: "outdoor-2",  src: "https://images.unsplash.com/photo-1476231682828-37e571bc172f?w=600&auto=format&fit=crop&q=80", label: "Lakeside morning" },
-  { id: "outdoor-3",  src: "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=600&auto=format&fit=crop&q=80", label: "Forest walk" },
-  { id: "outdoor-4",  src: "https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&auto=format&fit=crop&q=80", label: "Serene valley" },
-  { id: "outdoor-5",  src: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=600&auto=format&fit=crop&q=80", label: "Open road" },
-  { id: "outdoor-6",  src: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600&auto=format&fit=crop&q=80", label: "Golden hour" },
-  { id: "outdoor-7",  src: "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=600&auto=format&fit=crop&q=80", label: "Wild blooms" },
-  { id: "outdoor-8",  src: "https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=600&auto=format&fit=crop&q=80", label: "Hidden waterfall" },
-  { id: "outdoor-9",  src: "https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=600&auto=format&fit=crop&q=80", label: "Wildflower field" },
-  { id: "outdoor-10", src: "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=600&auto=format&fit=crop&q=80", label: "Misty forest" },
-  { id: "outdoor-11", src: "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?w=600&auto=format&fit=crop&q=80", label: "Sunset coast" },
-  { id: "outdoor-12", src: "https://images.unsplash.com/photo-1540979388789-6cee28a1cdc9?w=600&auto=format&fit=crop&q=80", label: "Afternoon light" },
-  { id: "outdoor-13", src: "https://images.unsplash.com/photo-1490730141103-6cac27aaab94?w=600&auto=format&fit=crop&q=80", label: "Open sky" },
-  { id: "outdoor-14", src: "https://images.unsplash.com/photo-1486325212027-8081e485255e?w=600&auto=format&fit=crop&q=80", label: "Countryside" },
-  { id: "outdoor-15", src: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=600&auto=format&fit=crop&q=80", label: "Morning light" },
-  { id: "outdoor-16", src: "https://images.unsplash.com/photo-1519681393784-d120267933ba?w=600&auto=format&fit=crop&q=80", label: "Starry peaks" },
-  { id: "outdoor-17", src: "https://images.unsplash.com/photo-1504700610630-ac6aba3536d3?w=600&auto=format&fit=crop&q=80", label: "Ocean breeze" },
-  { id: "outdoor-18", src: "https://images.unsplash.com/photo-1504198322253-cfa87a0ff25f?w=600&auto=format&fit=crop&q=80", label: "Autumn path" },
-  { id: "outdoor-19", src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80", label: "Evening sky" },
-  { id: "outdoor-20", src: "https://images.unsplash.com/photo-1500534314209-a157d0e62e75?w=600&auto=format&fit=crop&q=80", label: "Meadow peace" },
+// ─── Photo Categories ─────────────────────────────────────────────────────────
+
+type Photo = { id: string; src: string; label: string };
+type Video = { id: string; poster: string; src: string; label: string };
+
+const WEDDING: Photo[] = [
+  { id: "w1", src: H("wedding-1.png"), label: "Our wedding day 💍" },
+  { id: "w2", src: H("wedding-2.png"), label: "In the garden 🌸" },
+  { id: "w3", src: H("wedding-3.png"), label: "At the altar ❤️" },
+  { id: "w4", src: H("wedding-4.png"), label: "Beach ceremony 🌊" },
 ];
 
-const INDOOR_PHOTOS = [
-  { id: "indoor-1",  src: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=600&auto=format&fit=crop&q=80", label: "Cozy living room" },
-  { id: "indoor-2",  src: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=600&auto=format&fit=crop&q=80", label: "Morning kitchen" },
-  { id: "indoor-3",  src: "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?w=600&auto=format&fit=crop&q=80", label: "Soft bedroom" },
-  { id: "indoor-4",  src: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=600&auto=format&fit=crop&q=80", label: "Warm evenings" },
-  { id: "indoor-5",  src: "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=600&auto=format&fit=crop&q=80", label: "Coffee ritual" },
-  { id: "indoor-6",  src: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=600&auto=format&fit=crop&q=80", label: "Quiet mornings" },
-  { id: "indoor-7",  src: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&auto=format&fit=crop&q=80", label: "Date night" },
-  { id: "indoor-8",  src: "https://images.unsplash.com/photo-1521017432531-fbd92d768814?w=600&auto=format&fit=crop&q=80", label: "Candlelit" },
-  { id: "indoor-9",  src: "https://images.unsplash.com/photo-1503174971373-b1f69850bded?w=600&auto=format&fit=crop&q=80", label: "Cooking together" },
-  { id: "indoor-10", src: "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80", label: "Our café" },
-  { id: "indoor-11", src: "https://images.unsplash.com/photo-1540518614846-7eded433c457?w=600&auto=format&fit=crop&q=80", label: "Window light" },
-  { id: "indoor-12", src: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=600&auto=format&fit=crop&q=80", label: "Home" },
-  { id: "indoor-13", src: "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?w=600&auto=format&fit=crop&q=80", label: "Afternoon tea" },
-  { id: "indoor-14", src: "https://images.unsplash.com/photo-1547558902-a77ea42e5fa0?w=600&auto=format&fit=crop&q=80", label: "Fresh blooms" },
-  { id: "indoor-15", src: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&auto=format&fit=crop&q=80", label: "Cozy corner" },
-  { id: "indoor-16", src: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=600&auto=format&fit=crop&q=80", label: "Warm lights" },
-  { id: "indoor-17", src: "https://images.unsplash.com/photo-1567016432779-094069958ea5?w=600&auto=format&fit=crop&q=80", label: "Sunday morning" },
-  { id: "indoor-18", src: "https://images.unsplash.com/photo-1560448204-603b3fc33ddc?w=600&auto=format&fit=crop&q=80", label: "Our space" },
-  { id: "indoor-19", src: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=600&auto=format&fit=crop&q=80", label: "Lazy Sunday" },
-  { id: "indoor-20", src: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600&auto=format&fit=crop&q=80", label: "Evening light" },
+const CHURCH: Photo[] = [
+  { id: "c1", src: H("church-1.png"), label: "Sunday worship 🙏" },
+  { id: "c2", src: H("church-2.png"), label: "Morning prayer ✝️" },
+  { id: "c3", src: H("church-3.png"), label: "After service 💕" },
 ];
 
-const ALL_PHOTOS = [...OUTDOOR_PHOTOS, ...INDOOR_PHOTOS];
+const PARTY: Photo[] = [
+  { id: "p1", src: H("party-1.png"), label: "Birthday night 🎉" },
+  { id: "p2", src: H("party-2.png"), label: "Dancing 🎊" },
+  { id: "p3", src: H("party-3.png"), label: "Rooftop vibes 🌃" },
+  { id: "p4", src: "https://images.unsplash.com/photo-1529316738988-7e72b43fac68?w=600&auto=format&fit=crop&q=80", label: "New Year's 🥂" },
+  { id: "p5", src: "https://images.unsplash.com/photo-1528495612343-9ca9f4a4de28?w=600&auto=format&fit=crop&q=80", label: "Celebration ✨" },
+];
 
-type Tab = "outdoor" | "indoor";
+const CLUB: Photo[] = [
+  { id: "cl1", src: "https://images.unsplash.com/photo-1545128485-c400ce7b23d5?w=600&auto=format&fit=crop&q=80", label: "Neon nights 💃" },
+  { id: "cl2", src: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=600&auto=format&fit=crop&q=80", label: "DJ set 🎶" },
+  { id: "cl3", src: "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=600&auto=format&fit=crop&q=80", label: "Dance floor 🌙" },
+  { id: "cl4", src: "https://images.unsplash.com/photo-1571266028243-e4733b0f0bb0?w=600&auto=format&fit=crop&q=80", label: "VIP section 🥃" },
+  { id: "cl5", src: "https://images.unsplash.com/photo-1493676304819-0d7a8d026dcf?w=600&auto=format&fit=crop&q=80", label: "Late nights 🌟" },
+];
+
+const SCHOOL: Photo[] = [
+  { id: "s1", src: "https://images.unsplash.com/photo-1523580494863-6f3031224c94?w=600&auto=format&fit=crop&q=80", label: "Campus life 📚" },
+  { id: "s2", src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=600&auto=format&fit=crop&q=80", label: "Studying hard 📖" },
+  { id: "s3", src: "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80", label: "Graduation day 🎓" },
+  { id: "s4", src: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600&auto=format&fit=crop&q=80", label: "Lecture hall 🏫" },
+  { id: "s5", src: "https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e?w=600&auto=format&fit=crop&q=80", label: "Coffee & books ☕" },
+];
+
+const DAILY: Photo[] = [
+  { id: "d1", src: "https://images.unsplash.com/photo-1493925410384-84f842e616fb?w=600&auto=format&fit=crop&q=80", label: "Morning coffee ☕" },
+  { id: "d2", src: "https://images.unsplash.com/photo-1543339308-43e59d6b73a6?w=600&auto=format&fit=crop&q=80", label: "Cooking 🍳" },
+  { id: "d3", src: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?w=600&auto=format&fit=crop&q=80", label: "Morning yoga 🧘" },
+  { id: "d4", src: "https://images.unsplash.com/photo-1522199710521-72d69614c702?w=600&auto=format&fit=crop&q=80", label: "Working 💻" },
+  { id: "d5", src: "https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&auto=format&fit=crop&q=80", label: "Shopping 🛍️" },
+  { id: "d6", src: "https://images.unsplash.com/photo-1516455207990-7a41ce80f7ee?w=600&auto=format&fit=crop&q=80", label: "Reading 📖" },
+  { id: "d7", src: "https://images.unsplash.com/photo-1514315384763-ba401779410f?w=600&auto=format&fit=crop&q=80", label: "Park walk 🌿" },
+  { id: "d8", src: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=600&auto=format&fit=crop&q=80", label: "Running 🏃" },
+];
+
+const GLAM: Photo[] = [
+  { id: "g1", src: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=600&auto=format&fit=crop&q=80", label: "Looking gorgeous 🔥" },
+  { id: "g2", src: "https://images.unsplash.com/photo-1520813792240-56fc4a3765a7?w=600&auto=format&fit=crop&q=80", label: "Hot stuff 💋" },
+  { id: "g3", src: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=600&auto=format&fit=crop&q=80", label: "Photoshoot 📸" },
+  { id: "g4", src: "https://images.unsplash.com/photo-1488716820095-cbe80883c496?w=600&auto=format&fit=crop&q=80", label: "Natural beauty ✨" },
+  { id: "g5", src: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?w=600&auto=format&fit=crop&q=80", label: "She's everything 💕" },
+  { id: "g6", src: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=600&auto=format&fit=crop&q=80", label: "Stunning 💫" },
+];
+
+// ─── Videos ──────────────────────────────────────────────────────────────────
+
+const VIDEOS: Video[] = [
+  { id: "v1", poster: H("party-1.png"), src: "https://videos.pexels.com/video-files/3121461/3121461-hd_1280_720_30fps.mp4", label: "Birthday dance 🎉" },
+  { id: "v2", poster: H("daily-1.png"), src: "https://videos.pexels.com/video-files/4473545/4473545-hd_1280_720_25fps.mp4", label: "Morning routine ☀️" },
+  { id: "v3", poster: H("church-1.png"), src: "https://videos.pexels.com/video-files/3040284/3040284-hd_1280_720_25fps.mp4", label: "Sunday walk 🌿" },
+  { id: "v4", poster: H("school-1.png"), src: "https://videos.pexels.com/video-files/4812205/4812205-hd_1280_720_25fps.mp4", label: "Study session 📚" },
+  { id: "v5", poster: H("wedding-2.png"), src: "https://videos.pexels.com/video-files/3214660/3214660-hd_1280_720_25fps.mp4", label: "Wedding day 💍" },
+  { id: "v6", poster: H("party-3.png"), src: "https://videos.pexels.com/video-files/4608164/4608164-hd_1280_720_25fps.mp4", label: "Rooftop night 🌙" },
+];
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
+type Tab = "wedding" | "church" | "party" | "club" | "school" | "daily" | "glam" | "videos";
+
+const TABS: { key: Tab; label: string; count: number }[] = [
+  { key: "wedding", label: "💍 Wedding", count: WEDDING.length },
+  { key: "church",  label: "⛪ Church",  count: CHURCH.length },
+  { key: "party",   label: "🎉 Party",   count: PARTY.length },
+  { key: "club",    label: "🎊 Club",    count: CLUB.length },
+  { key: "school",  label: "📚 School",  count: SCHOOL.length },
+  { key: "daily",   label: "☀️ Daily",   count: DAILY.length },
+  { key: "glam",    label: "🔥 Glam",    count: GLAM.length },
+  { key: "videos",  label: "🎬 Videos",  count: VIDEOS.length },
+];
+
+function photosFor(tab: Tab): Photo[] {
+  switch (tab) {
+    case "wedding": return WEDDING;
+    case "church":  return CHURCH;
+    case "party":   return PARTY;
+    case "club":    return CLUB;
+    case "school":  return SCHOOL;
+    case "daily":   return DAILY;
+    case "glam":    return GLAM;
+    default:        return [];
+  }
+}
+
+const ALL_PHOTOS: Photo[] = [...WEDDING, ...CHURCH, ...PARTY, ...CLUB, ...SCHOOL, ...DAILY, ...GLAM];
+const PROFILE = H("wedding-2.png");
 
 export default function Gallery() {
   const [, setLocation] = useLocation();
-  const [activeTab, setActiveTab] = useState<Tab>("outdoor");
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [tab, setTab] = useState<Tab>("wedding");
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
+  const [videoIdx, setVideoIdx] = useState<number | null>(null);
 
-  const photos = activeTab === "outdoor" ? OUTDOOR_PHOTOS : INDOOR_PHOTOS;
-
-  const openLightbox = (localIndex: number) => {
-    const photo = photos[localIndex];
-    const globalIndex = ALL_PHOTOS.findIndex((p) => p.id === photo.id);
-    setLightboxIndex(globalIndex);
+  const openPhoto = (photo: Photo) => {
+    const gi = ALL_PHOTOS.findIndex((p) => p.id === photo.id);
+    setLightboxIdx(gi);
   };
 
-  const closeLightbox = () => setLightboxIndex(null);
+  const closeLightbox = () => setLightboxIdx(null);
+  const prev = () => setLightboxIdx(((lightboxIdx ?? 0) - 1 + ALL_PHOTOS.length) % ALL_PHOTOS.length);
+  const next = () => setLightboxIdx(((lightboxIdx ?? 0) + 1) % ALL_PHOTOS.length);
 
-  const prev = () => {
-    if (lightboxIndex === null) return;
-    setLightboxIndex((lightboxIndex - 1 + ALL_PHOTOS.length) % ALL_PHOTOS.length);
-  };
-
-  const next = () => {
-    if (lightboxIndex === null) return;
-    setLightboxIndex((lightboxIndex + 1) % ALL_PHOTOS.length);
-  };
+  const photos = photosFor(tab);
 
   return (
     <div className="app-shell">
@@ -88,94 +135,103 @@ export default function Gallery() {
       </div>
 
       <div className="chat-card gallery-card">
-        {/* Gallery Header */}
+        {/* Header */}
         <header className="chat-header">
           <div className="header-left">
             <button className="icon-btn" onClick={() => setLocation("/")} data-testid="button-back">
               <ArrowLeft size={18} />
             </button>
             <div>
-              <h1 className="header-title">
-                Gallery <Heart className="header-heart" />
-              </h1>
-              <p className="header-status">{ALL_PHOTOS.length} photos</p>
+              <h1 className="header-title">Gallery <Heart className="header-heart" /></h1>
+              <p className="header-status">{ALL_PHOTOS.length} photos · {VIDEOS.length} videos</p>
             </div>
           </div>
         </header>
 
         {/* Profile hero */}
         <div className="gallery-hero">
-          <img
-            src={PROFILE_PHOTO}
-            alt="My wife"
-            className="gallery-profile-img"
-            data-testid="img-profile"
-          />
+          <img src={PROFILE} alt="My wife" className="gallery-profile-img" />
           <div className="gallery-profile-info">
             <p className="gallery-profile-name">My Wife</p>
             <p className="gallery-profile-sub">Always in my heart ❤️</p>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="gallery-tabs">
-          <button
-            className={`gallery-tab ${activeTab === "outdoor" ? "gallery-tab-active" : ""}`}
-            onClick={() => setActiveTab("outdoor")}
-            data-testid="tab-outdoor"
-          >
-            Outdoor ({OUTDOOR_PHOTOS.length})
-          </button>
-          <button
-            className={`gallery-tab ${activeTab === "indoor" ? "gallery-tab-active" : ""}`}
-            onClick={() => setActiveTab("indoor")}
-            data-testid="tab-indoor"
-          >
-            Indoor ({INDOOR_PHOTOS.length})
-          </button>
+        {/* Tab bar */}
+        <div className="gallery-tabbar">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              className={`gallery-tab ${tab === t.key ? "gallery-tab-active" : ""}`}
+              onClick={() => setTab(t.key)}
+              data-testid={`tab-${t.key}`}
+            >
+              {t.label} <span className="tab-count">({t.count})</span>
+            </button>
+          ))}
         </div>
 
-        {/* Grid */}
+        {/* Grid or video grid */}
         <div className="gallery-grid-area">
-          <div className="gallery-grid">
-            {photos.map((photo, i) => (
-              <button
-                key={photo.id}
-                className="gallery-cell"
-                onClick={() => openLightbox(i)}
-                data-testid={`img-gallery-${photo.id}`}
-              >
-                <img src={photo.src} alt={photo.label} className="gallery-cell-img" loading="lazy" />
-                <div className="gallery-cell-overlay">
-                  <span className="gallery-cell-label">{photo.label}</span>
-                </div>
-              </button>
-            ))}
-          </div>
+          {tab === "videos" ? (
+            <div className="gallery-grid">
+              {VIDEOS.map((v, i) => (
+                <button key={v.id} className="gallery-cell video-cell" onClick={() => setVideoIdx(i)}>
+                  <img src={v.poster} alt={v.label} className="gallery-cell-img" loading="lazy" />
+                  <div className="video-play-overlay">
+                    <Play size={28} fill="white" color="white" />
+                  </div>
+                  <div className="gallery-cell-overlay">
+                    <span className="gallery-cell-label">{v.label}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="gallery-grid">
+              {photos.map((photo) => (
+                <button key={photo.id} className="gallery-cell" onClick={() => openPhoto(photo)} data-testid={`img-${photo.id}`}>
+                  <img src={photo.src} alt={photo.label} className="gallery-cell-img" loading="lazy" />
+                  <div className="gallery-cell-overlay">
+                    <span className="gallery-cell-label">{photo.label}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Lightbox */}
-      {lightboxIndex !== null && (
-        <div className="lightbox" onClick={closeLightbox} data-testid="lightbox">
-          <button className="lightbox-close" onClick={closeLightbox} data-testid="button-lightbox-close">
-            <X size={22} />
-          </button>
-          <button className="lightbox-nav lightbox-prev" onClick={(e) => { e.stopPropagation(); prev(); }} data-testid="button-lightbox-prev">
-            <ArrowLeft size={22} />
-          </button>
+      {/* Photo lightbox */}
+      {lightboxIdx !== null && (
+        <div className="lightbox" onClick={closeLightbox}>
+          <button className="lightbox-close" onClick={closeLightbox}><X size={22} /></button>
+          <button className="lightbox-nav lightbox-prev" onClick={(e) => { e.stopPropagation(); prev(); }}><ArrowLeft size={22} /></button>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <img
-              src={ALL_PHOTOS[lightboxIndex].src.replace("w=600", "w=1200")}
-              alt={ALL_PHOTOS[lightboxIndex].label}
-              className="lightbox-img"
-            />
-            <p className="lightbox-label">{ALL_PHOTOS[lightboxIndex].label}</p>
-            <p className="lightbox-counter">{lightboxIndex + 1} / {ALL_PHOTOS.length}</p>
+            <img src={ALL_PHOTOS[lightboxIdx].src} alt={ALL_PHOTOS[lightboxIdx].label} className="lightbox-img" />
+            <p className="lightbox-label">{ALL_PHOTOS[lightboxIdx].label}</p>
+            <p className="lightbox-counter">{lightboxIdx + 1} / {ALL_PHOTOS.length}</p>
           </div>
-          <button className="lightbox-nav lightbox-next" onClick={(e) => { e.stopPropagation(); next(); }} data-testid="button-lightbox-next">
-            <ArrowRight size={22} />
-          </button>
+          <button className="lightbox-nav lightbox-next" onClick={(e) => { e.stopPropagation(); next(); }}><ArrowRight size={22} /></button>
+        </div>
+      )}
+
+      {/* Video lightbox */}
+      {videoIdx !== null && (
+        <div className="lightbox" onClick={() => setVideoIdx(null)}>
+          <button className="lightbox-close" onClick={() => setVideoIdx(null)}><X size={22} /></button>
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <video
+              src={VIDEOS[videoIdx].src}
+              poster={VIDEOS[videoIdx].poster}
+              controls
+              autoPlay
+              className="lightbox-img"
+              style={{ background: "#000" }}
+            />
+            <p className="lightbox-label">{VIDEOS[videoIdx].label}</p>
+            <p className="lightbox-counter">Video {videoIdx + 1} / {VIDEOS.length}</p>
+          </div>
         </div>
       )}
     </div>

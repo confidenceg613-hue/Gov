@@ -1,0 +1,62 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "-nG7QqxH3B_L0PUlQliPp"
+uri = "file://artifacts/my-wife/public/her/wedding-1.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "_lGcpP_S-xVNikz0R06Ub"
+uri = "file://artifacts/my-wife/public/her/wedding-2.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "k8pCdvjtF8A6oDs334A1K"
+uri = "file://artifacts/my-wife/public/her/wedding-3.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "L5cnz7DL5IfC1tKPAE83c"
+uri = "file://artifacts/my-wife/public/her/wedding-4.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "GX_NmpnYwwOK6SAAkSA-m"
+uri = "file://artifacts/my-wife/public/her/church-1.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "eiHpLFaus9K3uC5qc8hp5"
+uri = "file://artifacts/my-wife/public/her/church-2.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Umh8SyymwGGCPR29fctRB"
+uri = "file://artifacts/my-wife/public/her/church-3.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1UCNoJIqoyXaM8_hIHGp6"
+uri = "file://artifacts/my-wife/public/her/party-1.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "Rdrl_B5Szlda3TtLYL595"
+uri = "file://artifacts/my-wife/public/her/party-2.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "wtCFoqqahdG3MXVqpzPu7"
+uri = "file://artifacts/my-wife/public/her/party-3.png"
+type = "image"
+title = "generated_image"

@@ -1,0 +1,1 @@
+- [My Wife app stack](my-wife-app.md) — pnpm monorepo; React+Vite frontend at /my-wife, Express API at /api; PostgreSQL with Drizzle ORM.

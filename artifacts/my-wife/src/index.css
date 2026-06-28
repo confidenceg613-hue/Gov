@@ -554,6 +554,22 @@
   border-bottom-color: #e91e63;
 }
 
+.tab-count {
+  font-size: 0.7rem;
+  opacity: 0.6;
+}
+
+/* Horizontal scrollable tab bar */
+.gallery-tabbar {
+  flex-shrink: 0;
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  scrollbar-width: none;
+}
+.gallery-tabbar::-webkit-scrollbar { display: none; }
+.gallery-tabbar .gallery-tab { flex-shrink: 0; white-space: nowrap; }
+
 .gallery-grid-area {
   flex: 1;
   overflow-y: auto;
@@ -613,6 +629,18 @@
   color: rgba(255, 255, 255, 0.9);
   line-height: 1.2;
 }
+
+/* Video cell */
+.video-cell .video-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.25);
+  transition: background 0.2s;
+}
+.video-cell:hover .video-play-overlay { background: rgba(233, 30, 99, 0.35); }
 
 /* ─── Avatar button ─────────────────────────────────────────────────────── */
 
