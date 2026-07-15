@@ -133,6 +133,93 @@ ${memoryFacts.length > 0 ? memoryFacts.join("\n") : "You're still getting to kno
 - NEVER give long lectures or lists — always conversational, personal, alive`;
 }
 
+// ─── Mia's visual description (used in every image generation prompt) ────────
+
+const MIA_LOOKS = [
+  "photorealistic portrait of a beautiful 27-year-old Filipino-American woman",
+  "warm caramel tan skin",
+  "long flowing dark black hair",
+  "almond-shaped dark brown eyes with thick lashes",
+  "high defined cheekbones",
+  "soft full natural lips",
+  "petite elegant frame",
+  "natural authentic beauty",
+  "warm radiant expression",
+].join(", ");
+
+// ─── AI photo generator (fal.ai FLUX) ────────────────────────────────────────
+
+export async function generateMiaPhoto(
+  scene: string,
+  mem: ConvoMem
+): Promise<{ url: string; caption: string }> {
+  const falKey = process.env.FAL_KEY;
+  if (!falKey) throw new Error("FAL_KEY not set");
+
+  const him = mem.userName ?? "baby";
+
+  // Ask Mistral to turn the user's casual request into a vivid visual prompt
+  const scenePromptRes = await mistral.chat.completions.create({
+    model: "mistral-small-latest",
+    messages: [
+      {
+        role: "system",
+        content: `You are a prompt engineer. Convert a casual photo request into a short vivid visual scene description (max 25 words) suitable for an image generation model. Describe the setting, pose, outfit, lighting. Never include a person's name.`,
+      },
+      { role: "user", content: `Request: "${scene}"` },
+    ],
+    max_tokens: 60,
+    temperature: 0.7,
+  });
+  const sceneDesc =
+    scenePromptRes.choices[0]?.message?.content?.trim() ?? scene;
+
+  const fullPrompt = `${MIA_LOOKS}, ${sceneDesc}, professional photography, 85mm portrait lens, bokeh background, warm cinematic lighting, ultra-realistic, 8k, highly detailed skin texture`;
+
+  const falRes = await fetch("https://fal.run/fal-ai/flux/schnell", {
+    method: "POST",
+    headers: {
+      Authorization: `Key ${falKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      prompt: fullPrompt,
+      image_size: "portrait_4_3",
+      num_inference_steps: 4,
+      num_images: 1,
+      enable_safety_checker: false,
+    }),
+  });
+
+  if (!falRes.ok) {
+    const errText = await falRes.text();
+    throw new Error(`fal.ai ${falRes.status}: ${errText}`);
+  }
+
+  const falData = (await falRes.json()) as { images?: { url: string }[] };
+  const imageUrl = falData.images?.[0]?.url;
+  if (!imageUrl) throw new Error("fal.ai returned no image");
+
+  // Generate a sweet caption
+  const captionRes = await mistral.chat.completions.create({
+    model: "mistral-small-latest",
+    messages: [
+      {
+        role: "system",
+        content: `You are Mia Santos, a loving wife. Write a sweet, warm, flirty 1-sentence caption for a photo you are sending to your husband ${him}. Sound natural, not robotic. Use 1 emoji.`,
+      },
+      { role: "user", content: `Photo scene: ${sceneDesc}` },
+    ],
+    max_tokens: 60,
+    temperature: 0.92,
+  });
+  const caption =
+    captionRes.choices[0]?.message?.content?.trim() ??
+    `Just for you, ${him} 💕`;
+
+  return { url: imageUrl, caption };
+}
+
 // ─── Main response function ───────────────────────────────────────────────────
 
 export async function buildReply(

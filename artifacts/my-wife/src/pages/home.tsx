@@ -183,7 +183,8 @@ export default function Home() {
     setIsTyping(true);
 
     try {
-      const res = await fetch(`${BASE}api/chat/photo`, {
+      // Try AI generation first, fall back to gallery pick
+      const res = await fetch(`${BASE}api/chat/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scene }),
@@ -397,7 +398,7 @@ function Bubble({ msg, profilePhoto }: { msg: LocalMessage; profilePhoto: string
         {imageData ? (
           <div className="bubble bubble-wife bubble-photo">
             <img
-              src={`${BASE}${imageData.imageUrl}`}
+              src={imageData.imageUrl.startsWith("http") ? imageData.imageUrl : `${BASE}${imageData.imageUrl}`}
               alt="Photo from Mia"
               className="chat-photo"
               loading="lazy"

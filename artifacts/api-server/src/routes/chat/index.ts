@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { messagesTable, memoryTable } from "@workspace/db";
 import { desc, eq, count, min, max, sql } from "drizzle-orm";
 import { SendMessageBody, DeleteMessageParams } from "@workspace/api-zod";
-import { buildReply, buildCheckin, pickPhoto, ConvoMem } from "./engine";
+import { buildReply, buildCheckin, pickPhoto, generateMiaPhoto, ConvoMem } from "./engine";
 
 const router = Router();
 
@@ -199,6 +199,48 @@ router.post("/chat/photo", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "photo failed");
     res.status(500).json({ error: "Failed to get photo" });
+  }
+});
+
+router.post("/chat/generate", async (req, res) => {
+  const { scene } = req.body as { scene?: string };
+  const request = (scene ?? "send me a photo of yourself").trim();
+
+  try {
+    const mem = await loadMem();
+    const { url, caption } = await generateMiaPhoto(request, mem);
+
+    const content = `[IMAGE:${url}] ${caption}`;
+    await db.insert(messagesTable).values({ role: "assistant", content });
+
+    const [saved] = await db
+      .select()
+      .from(messagesTable)
+      .orderBy(desc(messagesTable.createdAt))
+      .limit(1);
+
+    res.json({
+      id: saved?.id ?? Date.now(),
+      role: "assistant",
+      content,
+      imageUrl: url,
+      caption,
+      createdAt: saved?.createdAt.toISOString() ?? new Date().toISOString(),
+    });
+  } catch (err) {
+    req.log.error({ err }, "generate failed");
+    // Fall back to catalog pick
+    try {
+      const mem = await loadMem();
+      const { path, caption } = await pickPhoto(request, mem);
+      const content = `[IMAGE:${path}] ${caption}`;
+      await db.insert(messagesTable).values({ role: "assistant", content });
+      const [saved] = await db.select().from(messagesTable).orderBy(desc(messagesTable.createdAt)).limit(1);
+      res.json({ id: saved?.id ?? Date.now(), role: "assistant", content, imageUrl: path, caption, createdAt: saved?.createdAt.toISOString() ?? new Date().toISOString() });
+    } catch (err2) {
+      req.log.error({ err: err2 }, "fallback photo also failed");
+      res.status(500).json({ error: "Failed to generate photo" });
+    }
   }
 });
 
