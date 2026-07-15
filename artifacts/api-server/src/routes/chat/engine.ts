@@ -153,8 +153,8 @@ export async function generateMiaPhoto(
   scene: string,
   mem: ConvoMem
 ): Promise<{ url: string; caption: string }> {
-  // AI Horde works anonymously with "0000000000"; set HORDE_API_KEY for priority
-  const hordeKey = process.env.HORDE_API_KEY ?? "0000000000";
+  // AI Horde works anonymously with "0000000000"; set Horde or HORDE_API_KEY for priority
+  const hordeKey = process.env.Horde ?? process.env.HORDE_API_KEY ?? "0000000000";
   const him = mem.userName ?? "baby";
 
   // Ask Mistral to turn the user's casual request into a vivid visual prompt
