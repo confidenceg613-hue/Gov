@@ -1,45 +1,47 @@
-# [Project name]
+# My Wife — AI Companion App
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
-
-## Run & Operate
-
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+A chat app featuring Mia Santos, a Filipino-American virtual wife powered by Mistral AI.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- **Frontend**: React + Vite (`artifacts/my-wife`) — served at `/`
+- **API**: Express + TypeScript (`artifacts/api-server`) — served at `/api`
+- **Database**: PostgreSQL via Drizzle ORM (`lib/db`)
+- **AI**: Mistral AI (`mistral-large-latest`) via OpenAI-compatible SDK
+- **Photo picker**: Mistral AI (`mistral-small-latest`) classifies scene and selects matching photo
 
-## Where things live
+## Running the app
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+Both services start automatically via configured workflows.
 
-## Architecture decisions
+| Service | Workflow | Port |
+|---------|----------|------|
+| Frontend | `artifacts/my-wife: web` | 19818 |
+| API | `artifacts/api-server: API Server` | 8080 |
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+## Required Secrets
 
-## Product
+| Secret | Purpose |
+|--------|---------|
+| `MISTRAL_API_KEY` | Mistral AI for chat responses and photo selection |
+| `SESSION_SECRET` | Session signing |
+| `DATABASE_URL` | Auto-provisioned by Replit |
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+## Key Features
 
-## User preferences
+- **Real AI chat** — Mia responds using Mistral AI with full persona/backstory
+- **Photo requests** — Camera button lets you describe a scene; Mistral picks the best matching photo
+- **Persistent memory** — Remembers your name, job, mood across sessions
+- **Daily check-in** — Proactive messages from Mia
+- **Gallery** — Photo and video gallery organized by category
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+## Architecture Notes
 
-## Gotchas
+- AI engine: `artifacts/api-server/src/routes/chat/engine.ts`
+- Character backstory: `artifacts/api-server/src/routes/chat/backstory.ts`
+- Photo messages stored as `[IMAGE:path] caption` in DB, parsed by frontend `Bubble` component
+- Photos live in `artifacts/my-wife/public/her/`
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+## User Preferences
 
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Uses Mistral AI for all AI features

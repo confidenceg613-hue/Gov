@@ -8,7 +8,7 @@ import {
   useGetChatStats,
   getGetChatStatsQueryKey,
 } from "@workspace/api-client-react";
-import { Send, Heart, Trash2, CalendarHeart, Images, MapPin, Briefcase } from "lucide-react";
+import { Send, Heart, Trash2, CalendarHeart, Images, MapPin, Briefcase, Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,15 +24,25 @@ type LocalMessage = {
   createdAt: string;
 };
 
+// Parse [IMAGE:path] caption format
+function parseImageMessage(content: string): { imageUrl: string; caption: string } | null {
+  const match = content.match(/^\[IMAGE:([^\]]+)\]\s*(.*)/s);
+  if (!match) return null;
+  return { imageUrl: match[1], caption: match[2].trim() };
+}
+
 export default function Home() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [localMessages, setLocalMessages] = useState<LocalMessage[]>([]);
+  const [showPhotoBar, setShowPhotoBar] = useState(false);
+  const [photoRequest, setPhotoRequest] = useState("");
 
   const { data: serverMessages = [], isLoading } = useGetMessages();
   const { data: stats } = useGetChatStats();
@@ -66,7 +76,7 @@ export default function Home() {
     setIsTyping(true);
 
     try {
-      const res = await fetch("/api/chat/messages", {
+      const res = await fetch(`${BASE}api/chat/messages`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ content }),
@@ -98,7 +108,7 @@ export default function Home() {
     if (isTyping) return;
     setIsTyping(true);
     try {
-      const res = await fetch("/api/chat/checkin", { method: "POST" });
+      const res = await fetch(`${BASE}api/chat/checkin`, { method: "POST" });
       if (!res.ok) throw new Error();
       const data = await res.json();
       await new Promise((r) => setTimeout(r, 600 + Math.random() * 900));
@@ -109,6 +119,50 @@ export default function Home() {
     } catch {
       setIsTyping(false);
     }
+  };
+
+  const handleRequestPhoto = async (e?: FormEvent) => {
+    e?.preventDefault();
+    const scene = photoRequest.trim() || "send me a photo of yourself";
+    if (isTyping) return;
+
+    setShowPhotoBar(false);
+    setPhotoRequest("");
+
+    // Show user request bubble
+    const tempId = Date.now();
+    const userContent = `📷 ${scene}`;
+    setLocalMessages((prev) => [...prev, { id: tempId, role: "user", content: userContent, createdAt: new Date().toISOString() }]);
+    setIsTyping(true);
+
+    try {
+      const res = await fetch(`${BASE}api/chat/photo`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scene }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+
+      await new Promise((r) => setTimeout(r, 800 + Math.random() * 800));
+      setIsTyping(false);
+      setLocalMessages((prev) => {
+        const without = prev.filter((m) => m.id !== tempId);
+        return [
+          ...without,
+          { id: tempId, role: "user", content: userContent, createdAt: new Date().toISOString() },
+          { id: data.id, role: "assistant", content: data.content, createdAt: data.createdAt },
+        ];
+      });
+
+      queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetChatStatsQueryKey() });
+    } catch {
+      setIsTyping(false);
+      setLocalMessages((prev) => prev.filter((m) => m.id !== tempId));
+    }
+
+    inputRef.current?.focus();
   };
 
   const handleClearChat = () => {
@@ -222,8 +276,35 @@ export default function Home() {
           <div ref={scrollRef} />
         </div>
 
+        {/* Photo request bar */}
+        {showPhotoBar && (
+          <form className="photo-bar" onSubmit={handleRequestPhoto}>
+            <Camera size={15} className="photo-bar-icon" />
+            <input
+              ref={photoInputRef}
+              className="photo-bar-input"
+              placeholder="Describe the photo… (e.g. at the beach, date night)"
+              value={photoRequest}
+              onChange={(e) => setPhotoRequest(e.target.value)}
+              autoFocus
+            />
+            <button type="submit" className="photo-bar-send">Send 📷</button>
+            <button type="button" className="photo-bar-cancel" onClick={() => { setShowPhotoBar(false); setPhotoRequest(""); }}>✕</button>
+          </form>
+        )}
+
         {/* Input */}
         <form className="input-area" onSubmit={handleSendMessage} data-testid="message-form">
+          <button
+            type="button"
+            className={`icon-btn camera-btn ${showPhotoBar ? "camera-btn-active" : ""}`}
+            onClick={() => setShowPhotoBar((v) => !v)}
+            disabled={isTyping}
+            title="Request a photo"
+            data-testid="button-camera"
+          >
+            <Camera size={17} />
+          </button>
           <Input
             ref={inputRef}
             value={inputValue}
@@ -245,6 +326,9 @@ export default function Home() {
 
 function Bubble({ msg, profilePhoto }: { msg: LocalMessage; profilePhoto: string }) {
   const isUser = msg.role === "user";
+  const imageData = !isUser ? parseImageMessage(msg.content) : null;
+  const BASE = import.meta.env.BASE_URL;
+
   return (
     <div className={`bubble-row ${isUser ? "bubble-row-user" : "bubble-row-wife"}`} data-testid={`message-${msg.role}-${msg.id}`}>
       {!isUser && (
@@ -254,7 +338,21 @@ function Bubble({ msg, profilePhoto }: { msg: LocalMessage; profilePhoto: string
         </Avatar>
       )}
       <div className={`bubble-group ${isUser ? "items-end" : "items-start"}`}>
-        <div className={`bubble ${isUser ? "bubble-user" : "bubble-wife"}`}>{msg.content}</div>
+        {imageData ? (
+          <div className="bubble bubble-wife bubble-photo">
+            <img
+              src={`${BASE}${imageData.imageUrl}`}
+              alt="Photo from Mia"
+              className="chat-photo"
+              loading="lazy"
+            />
+            {imageData.caption && (
+              <p className="chat-photo-caption">{imageData.caption}</p>
+            )}
+          </div>
+        ) : (
+          <div className={`bubble ${isUser ? "bubble-user" : "bubble-wife"}`}>{msg.content}</div>
+        )}
         <span className="bubble-time">{format(new Date(msg.createdAt), "h:mm a")}</span>
       </div>
     </div>

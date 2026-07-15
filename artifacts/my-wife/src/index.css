@@ -869,3 +869,110 @@
 
 .send-btn:active:not(:disabled) { transform: scale(0.94) !important; }
 .send-btn:disabled { opacity: 0.4 !important; }
+
+/* ─── Camera button ─────────────────────────────────────────────────────── */
+
+.camera-btn {
+  width: 40px !important;
+  height: 40px !important;
+  flex-shrink: 0;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.2s, background 0.2s;
+}
+
+.camera-btn:hover:not(:disabled) {
+  color: #e91e63 !important;
+  background: rgba(233, 30, 99, 0.1) !important;
+}
+
+.camera-btn-active {
+  color: #e91e63 !important;
+  background: rgba(233, 30, 99, 0.12) !important;
+}
+
+/* ─── Photo request bar ─────────────────────────────────────────────────── */
+
+.photo-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(233, 30, 99, 0.06);
+  border-top: 1px solid rgba(233, 30, 99, 0.15);
+  animation: slideDown 0.18s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.photo-bar-icon {
+  color: #e91e63;
+  flex-shrink: 0;
+}
+
+.photo-bar-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(233, 30, 99, 0.3);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.88rem;
+  padding: 6px 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.photo-bar-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+.photo-bar-input:focus { border-color: rgba(233, 30, 99, 0.6); }
+
+.photo-bar-send {
+  background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.photo-bar-send:hover { opacity: 0.88; }
+
+.photo-bar-cancel {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.photo-bar-cancel:hover { color: rgba(255, 255, 255, 0.8); }
+
+/* ─── Chat photo bubble ─────────────────────────────────────────────────── */
+
+.bubble-photo {
+  padding: 6px 6px 10px !important;
+  max-width: 240px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.chat-photo {
+  width: 100%;
+  max-width: 228px;
+  border-radius: 10px;
+  object-fit: cover;
+  display: block;
+  aspect-ratio: 3/4;
+}
+
+.chat-photo-caption {
+  margin: 8px 6px 0;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.4;
+}

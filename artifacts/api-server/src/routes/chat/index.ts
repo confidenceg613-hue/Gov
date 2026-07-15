@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { messagesTable, memoryTable } from "@workspace/db";
 import { desc, eq, count, min, max, sql } from "drizzle-orm";
 import { SendMessageBody, DeleteMessageParams } from "@workspace/api-zod";
-import { buildReply, ConvoMem } from "./engine";
+import { buildReply, buildCheckin, pickPhoto, ConvoMem } from "./engine";
 
 const router = Router();
 
@@ -111,7 +111,7 @@ router.post("/chat/messages", async (req, res) => {
     await extractMemory(content, mem);
 
     const histCtx = history.map((m) => ({ role: m.role, content: m.content }));
-    const reply = buildReply(content, histCtx, mem);
+    const reply = await buildReply(content, histCtx, mem);
     await db.insert(messagesTable).values({ role: "assistant", content: reply });
 
     const recent = await db.select().from(messagesTable).orderBy(desc(messagesTable.createdAt)).limit(2);
@@ -157,26 +157,48 @@ router.post("/chat/checkin", async (req, res) => {
       loadMem(),
     ]);
 
-    const him = mem.userName ?? "love";
-    const mood = mem.lastMood ?? "neutral";
+    const reply = await buildCheckin(
+      history.slice(-4).map(m => ({ role: m.role, content: m.content })),
+      mem
+    );
 
-    let prompt: string;
-    if (history.length === 0) prompt = "hi";
-    else if (mood === "sad" || mood === "stressed") prompt = "checking on you";
-    else prompt = "daily checkin";
-
-    const greeting = history.length === 0
-      ? `Hey ${him}! Just stopping by to remind you that you are so loved. How's your day going? 💕`
-      : mood === "sad" || mood === "stressed"
-        ? buildReply("checking in on you", [], mem)
-        : buildReply("hi", history.slice(-4).map(m => ({ role: m.role, content: m.content })), mem);
-
-    const reply = greeting;
     await db.insert(messagesTable).values({ role: "assistant", content: reply });
     res.json({ content: reply, createdAt: new Date().toISOString() });
   } catch (err) {
     req.log.error({ err }, "checkin failed");
     res.status(500).json({ error: "Failed to send check-in" });
+  }
+});
+
+router.post("/chat/photo", async (req, res) => {
+  const { scene } = req.body as { scene?: string };
+  const request = (scene ?? "send me a photo of yourself").trim();
+
+  try {
+    const mem = await loadMem();
+    const { path, caption } = await pickPhoto(request, mem);
+
+    // Store as a special image message: [IMAGE:path] caption text
+    const content = `[IMAGE:${path}] ${caption}`;
+    await db.insert(messagesTable).values({ role: "assistant", content });
+
+    const [saved] = await db
+      .select()
+      .from(messagesTable)
+      .orderBy(desc(messagesTable.createdAt))
+      .limit(1);
+
+    res.json({
+      id: saved?.id ?? Date.now(),
+      role: "assistant",
+      content,
+      imageUrl: path,
+      caption,
+      createdAt: saved?.createdAt.toISOString() ?? new Date().toISOString(),
+    });
+  } catch (err) {
+    req.log.error({ err }, "photo failed");
+    res.status(500).json({ error: "Failed to get photo" });
   }
 });
 
