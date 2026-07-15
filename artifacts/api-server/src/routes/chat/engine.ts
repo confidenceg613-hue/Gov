@@ -147,15 +147,14 @@ const MIA_LOOKS = [
   "warm radiant expression",
 ].join(", ");
 
-// ─── AI photo generator (fal.ai FLUX) ────────────────────────────────────────
+// ─── AI photo generator (AI Horde) ───────────────────────────────────────────
 
 export async function generateMiaPhoto(
   scene: string,
   mem: ConvoMem
 ): Promise<{ url: string; caption: string }> {
-  const falKey = process.env.FAL_KEY;
-  if (!falKey) throw new Error("FAL_KEY not set");
-
+  // AI Horde works anonymously with "0000000000"; set HORDE_API_KEY for priority
+  const hordeKey = process.env.HORDE_API_KEY ?? "0000000000";
   const him = mem.userName ?? "baby";
 
   // Ask Mistral to turn the user's casual request into a vivid visual prompt
@@ -175,30 +174,73 @@ export async function generateMiaPhoto(
     scenePromptRes.choices[0]?.message?.content?.trim() ?? scene;
 
   const fullPrompt = `${MIA_LOOKS}, ${sceneDesc}, professional photography, 85mm portrait lens, bokeh background, warm cinematic lighting, ultra-realistic, 8k, highly detailed skin texture`;
+  const negPrompt =
+    "ugly, deformed, disfigured, bad anatomy, extra limbs, watermark, blurry, low quality, cartoon, anime, illustration, painting, text";
 
-  const falRes = await fetch("https://fal.run/fal-ai/flux/schnell", {
+  // Submit async generation job to AI Horde
+  const submitRes = await fetch("https://aihorde.net/api/v2/generate/async", {
     method: "POST",
     headers: {
-      Authorization: `Key ${falKey}`,
       "Content-Type": "application/json",
+      apikey: hordeKey,
+      "Client-Agent": "mia-wife-app:1.0:replit",
     },
     body: JSON.stringify({
-      prompt: fullPrompt,
-      image_size: "portrait_4_3",
-      num_inference_steps: 4,
-      num_images: 1,
-      enable_safety_checker: false,
+      prompt: `${fullPrompt} ### ${negPrompt}`,
+      params: {
+        sampler_name: "k_euler_a",
+        width: 512,
+        height: 704,
+        steps: 30,
+        n: 1,
+        cfg_scale: 7.5,
+      },
+      models: ["Realistic Vision 5.1", "AbsoluteReality", "Deliberate"],
+      r2: true,
+      nsfw: false,
     }),
   });
 
-  if (!falRes.ok) {
-    const errText = await falRes.text();
-    throw new Error(`fal.ai ${falRes.status}: ${errText}`);
+  if (!submitRes.ok) {
+    const errText = await submitRes.text();
+    throw new Error(`AI Horde submit ${submitRes.status}: ${errText}`);
   }
 
-  const falData = (await falRes.json()) as { images?: { url: string }[] };
-  const imageUrl = falData.images?.[0]?.url;
-  if (!imageUrl) throw new Error("fal.ai returned no image");
+  const submitData = (await submitRes.json()) as { id?: string };
+  const jobId = submitData.id;
+  if (!jobId) throw new Error("AI Horde returned no job ID");
+
+  // Poll every 6 s, up to 2 minutes
+  const deadline = Date.now() + 120_000;
+  let imageUrl: string | undefined;
+
+  while (Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 6_000));
+
+    const checkRes = await fetch(
+      `https://aihorde.net/api/v2/generate/status/${jobId}`,
+      {
+        headers: {
+          apikey: hordeKey,
+          "Client-Agent": "mia-wife-app:1.0:replit",
+        },
+      }
+    );
+
+    if (!checkRes.ok) continue;
+
+    const checkData = (await checkRes.json()) as {
+      done: boolean;
+      generations?: { img: string; state?: string }[];
+    };
+
+    if (checkData.done && checkData.generations?.length) {
+      imageUrl = checkData.generations[0].img;
+      break;
+    }
+  }
+
+  if (!imageUrl) throw new Error("AI Horde generation timed out after 2 min");
 
   // Generate a sweet caption
   const captionRes = await mistral.chat.completions.create({
