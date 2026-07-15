@@ -31,28 +31,46 @@ export interface ConvoMem {
 }
 
 // ─── Photo catalog ────────────────────────────────────────────────────────────
+// Each photo has rich contextual tags so Mistral can match it to any conversation mood.
 
 const PHOTO_CATALOG = [
-  { path: "her/wedding-1.png", tags: ["wedding", "bridal", "ceremony", "dress", "marriage", "ring", "vows", "bride"] },
-  { path: "her/wedding-2.png", tags: ["wedding", "rose", "garden", "flowers", "romantic", "love", "beautiful"] },
-  { path: "her/wedding-3.png", tags: ["wedding", "altar", "church", "ceremony", "vows", "moment"] },
-  { path: "her/wedding-4.png", tags: ["wedding", "beach", "ocean", "sunset", "malibu", "romantic"] },
-  { path: "her/church-1.png",  tags: ["church", "sunday", "worship", "prayer", "faith", "spiritual", "god", "holy"] },
-  { path: "her/church-2.png",  tags: ["church", "prayer", "morning", "worship", "faith", "devotion"] },
-  { path: "her/church-3.png",  tags: ["church", "after service", "sunday", "bright", "happy", "smile"] },
-  { path: "her/hot-1.png",     tags: ["date night", "dinner", "candle", "romantic", "sexy", "beautiful", "dressed up", "elegant"] },
-  { path: "her/hot-2.png",     tags: ["luxury", "hotel", "glam", "fancy", "cocktail", "night", "dressed up", "beautiful"] },
-  { path: "her/outdoor-1.png", tags: ["rooftop", "sunset", "outdoor", "city", "evening", "beautiful", "golden hour"] },
-  { path: "her/outdoor-2.png", tags: ["morning", "run", "fitness", "outdoor", "active", "sporty", "fresh"] },
-  { path: "her/outdoor-3.png", tags: ["beach", "ocean", "sun", "summer", "waves", "relaxing", "vacation"] },
-  { path: "her/party-1.png",   tags: ["birthday", "party", "celebrate", "fun", "happy", "night out"] },
-  { path: "her/party-2.png",   tags: ["dancing", "party", "fun", "night", "celebration", "music", "club"] },
-  { path: "her/party-3.png",   tags: ["rooftop", "night", "vibes", "party", "fun", "city", "drinks"] },
-  { path: "her/party-4.png",   tags: ["gallery", "art", "event", "fancy", "wine", "social", "elegant"] },
-  { path: "her/school-4.png",  tags: ["school", "campus", "university", "academic", "smart", "books", "study", "counselor"] },
-  { path: "her/selfie-1.png",  tags: ["selfie", "mirror", "bathroom", "casual", "home", "cute", "natural"] },
-  { path: "her/club-4.png",    tags: ["club", "dancing", "night", "music", "queen", "fun", "dress", "nightlife"] },
-  { path: "her/daily-5.png",   tags: ["coffee", "morning", "home", "cozy", "casual", "breakfast", "daily", "routine"] },
+  // ── Wedding / Romantic milestone ──
+  { path: "her/wedding-1.png", tags: ["wedding", "bridal", "ceremony", "white dress", "marriage", "ring", "vows", "bride", "big day", "i do", "chapel", "formal", "dressed up"] },
+  { path: "her/wedding-2.png", tags: ["wedding", "rose", "garden", "flowers", "romantic", "love", "beautiful", "anniversary", "bouquet", "outdoor wedding", "floral", "special"] },
+  { path: "her/wedding-3.png", tags: ["wedding", "altar", "church", "ceremony", "vows", "moment", "emotional", "teary", "meaningful", "sacred", "spiritual"] },
+  { path: "her/wedding-4.png", tags: ["wedding", "beach", "ocean", "sunset", "malibu", "romantic", "vacation vibes", "waves", "golden hour", "paradise", "horizon"] },
+
+  // ── Church / Faith ──
+  { path: "her/church-1.png",  tags: ["church", "sunday", "worship", "prayer", "faith", "spiritual", "god", "holy", "christian", "blessing", "grateful", "peaceful", "sunday best"] },
+  { path: "her/church-2.png",  tags: ["church", "prayer", "morning", "worship", "faith", "devotion", "quiet", "reflection", "calm", "sunday morning", "grateful"] },
+  { path: "her/church-3.png",  tags: ["church", "after service", "sunday", "bright", "happy", "smile", "cheerful", "fresh", "morning glow", "faith", "joyful"] },
+
+  // ── Hot / Glamorous / Date night ──
+  { path: "her/hot-1.png",     tags: ["date night", "dinner", "candle", "romantic", "sexy", "beautiful", "dressed up", "elegant", "flirty", "red lips", "stunning", "love", "miss you", "looking good"] },
+  { path: "her/hot-2.png",     tags: ["luxury", "hotel", "glam", "fancy", "cocktail", "night", "dressed up", "beautiful", "confident", "heels", "sexy", "special occasion", "pampered", "rich vibes"] },
+
+  // ── Outdoor / Nature ──
+  { path: "her/outdoor-1.png", tags: ["rooftop", "sunset", "outdoor", "city", "evening", "beautiful", "golden hour", "skyline", "breezy", "views", "peaceful", "dreamy"] },
+  { path: "her/outdoor-2.png", tags: ["morning", "run", "fitness", "outdoor", "active", "sporty", "fresh", "exercise", "healthy", "jogger", "athletic", "sunrise", "energetic", "gym"] },
+  { path: "her/outdoor-3.png", tags: ["beach", "ocean", "sun", "summer", "waves", "relaxing", "vacation", "bikini", "swimsuit", "sand", "holiday", "tropical", "hot day", "chill"] },
+
+  // ── Party / Night out ──
+  { path: "her/party-1.png",   tags: ["birthday", "party", "celebrate", "fun", "happy", "night out", "cake", "balloons", "festive", "group", "friends", "cheering", "joy"] },
+  { path: "her/party-2.png",   tags: ["dancing", "party", "fun", "night", "celebration", "music", "club", "moves", "confident", "energy", "living her best life"] },
+  { path: "her/party-3.png",   tags: ["rooftop", "night", "vibes", "party", "fun", "city", "drinks", "laughing", "stars", "cool", "aesthetic", "chill night"] },
+  { path: "her/party-4.png",   tags: ["gallery", "art", "event", "fancy", "wine", "social", "elegant", "intellectual", "cultured", "sophisticated", "networking", "classy"] },
+
+  // ── School / Work / Smart ──
+  { path: "her/school-4.png",  tags: ["school", "campus", "university", "academic", "smart", "books", "study", "counselor", "professional", "career", "educated", "focused", "teacher", "hardworking"] },
+
+  // ── Casual / Everyday / Selfie ──
+  { path: "her/selfie-1.png",  tags: ["selfie", "mirror", "bathroom", "casual", "home", "cute", "natural", "no makeup", "comfy", "lazy day", "just woke up", "natural beauty", "soft", "chill", "just me"] },
+
+  // ── Club / Nightlife ──
+  { path: "her/club-4.png",    tags: ["club", "dancing", "night", "music", "queen", "fun", "dress", "nightlife", "vibes", "sequin", "glow up", "boss lady", "lit", "fire"] },
+
+  // ── Daily / Morning ──
+  { path: "her/daily-5.png",   tags: ["coffee", "morning", "home", "cozy", "casual", "breakfast", "daily", "routine", "good morning", "sleepy", "comfy", "kitchen", "domestic", "wifey vibes", "at home"] },
 ];
 
 // ─── System prompt builder ────────────────────────────────────────────────────

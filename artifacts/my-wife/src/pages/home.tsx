@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, FormEvent } from "react";
+import { useState, useRef, useEffect, useCallback, FormEvent } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
@@ -8,7 +8,7 @@ import {
   useGetChatStats,
   getGetChatStatsQueryKey,
 } from "@workspace/api-client-react";
-import { Send, Heart, Trash2, CalendarHeart, Images, MapPin, Briefcase, Camera } from "lucide-react";
+import { Send, Heart, Trash2, CalendarHeart, Images, MapPin, Briefcase, Camera, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,6 +31,45 @@ function parseImageMessage(content: string): { imageUrl: string; caption: string
   return { imageUrl: match[1], caption: match[2].trim() };
 }
 
+// Strip emojis and image tags so TTS sounds natural
+function cleanForSpeech(text: string): string {
+  return text
+    .replace(/^\[IMAGE:[^\]]+\]\s*/g, "")
+    // eslint-disable-next-line no-misleading-character-class
+    .replace(/[\u{1F300}-\u{1FFFF}\u{2600}-\u{27BF}]/gu, "")
+    .replace(/[❤️💕💗💓💞💘]/g, "")
+    .trim();
+}
+
+// Speak text using Web Speech API with a natural female voice
+function speakMia(text: string) {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const clean = cleanForSpeech(text);
+  if (!clean) return;
+  const utterance = new SpeechSynthesisUtterance(clean);
+  const trySpeak = () => {
+    const voices = window.speechSynthesis.getVoices();
+    // Prefer natural-sounding English female voices
+    const preferred = ["Samantha", "Victoria", "Karen", "Moira", "Fiona", "Tessa", "Veena", "Allison", "Ava", "Susan", "Zoe"];
+    let voice = voices.find((v) => v.lang.startsWith("en") && preferred.some((name) => v.name.includes(name)));
+    if (!voice) voice = voices.find((v) => v.lang.startsWith("en-US") && v.name.toLowerCase().includes("female"));
+    if (!voice) voice = voices.find((v) => v.lang.startsWith("en-US"));
+    if (!voice) voice = voices.find((v) => v.lang.startsWith("en"));
+    if (voice) utterance.voice = voice;
+    utterance.pitch = 1.08;
+    utterance.rate = 0.93;
+    utterance.volume = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+  // Voices may not be loaded yet on first call
+  if (window.speechSynthesis.getVoices().length > 0) {
+    trySpeak();
+  } else {
+    window.speechSynthesis.onvoiceschanged = () => { trySpeak(); window.speechSynthesis.onvoiceschanged = null; };
+  }
+}
+
 export default function Home() {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
@@ -43,6 +82,11 @@ export default function Home() {
   const [localMessages, setLocalMessages] = useState<LocalMessage[]>([]);
   const [showPhotoBar, setShowPhotoBar] = useState(false);
   const [photoRequest, setPhotoRequest] = useState("");
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+
+  const speak = useCallback((text: string) => {
+    if (voiceEnabled) speakMia(text);
+  }, [voiceEnabled]);
 
   const { data: serverMessages = [], isLoading } = useGetMessages();
   const { data: stats } = useGetChatStats();
@@ -89,10 +133,12 @@ export default function Home() {
       await new Promise((r) => setTimeout(r, delay));
 
       setIsTyping(false);
+      const reply = data.assistantMessage as LocalMessage;
       setLocalMessages((prev) => {
         const without = prev.filter((m) => m.id !== tempId);
-        return [...without, { ...data.userMessage, content }, data.assistantMessage];
+        return [...without, { ...data.userMessage, content }, reply];
       });
+      speak(reply.content);
 
       queryClient.invalidateQueries({ queryKey: getGetChatStatsQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey() });
@@ -114,6 +160,7 @@ export default function Home() {
       await new Promise((r) => setTimeout(r, 600 + Math.random() * 900));
       setIsTyping(false);
       setLocalMessages((prev) => [...prev, { id: Date.now(), role: "assistant", content: data.content, createdAt: data.createdAt }]);
+      speak(data.content);
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetChatStatsQueryKey() });
     } catch {
@@ -154,6 +201,7 @@ export default function Home() {
           { id: data.id, role: "assistant", content: data.content, createdAt: data.createdAt },
         ];
       });
+      speak(data.content);
 
       queryClient.invalidateQueries({ queryKey: getGetMessagesQueryKey() });
       queryClient.invalidateQueries({ queryKey: getGetChatStatsQueryKey() });
@@ -212,6 +260,14 @@ export default function Home() {
             </div>
           </div>
           <div className="header-actions">
+            <button
+              className={`icon-btn ${voiceEnabled ? "icon-btn-voice-on" : ""}`}
+              onClick={() => { setVoiceEnabled((v) => !v); window.speechSynthesis?.cancel(); }}
+              title={voiceEnabled ? "Mia's voice on — click to mute" : "Mia's voice off — click to unmute"}
+              data-testid="button-voice"
+            >
+              {voiceEnabled ? <Volume2 size={17} /> : <VolumeX size={17} />}
+            </button>
             <button className="icon-btn" onClick={() => setLocation("/gallery")} title="Her Gallery" data-testid="button-gallery">
               <Images size={17} />
             </button>
@@ -308,7 +364,7 @@ export default function Home() {
           <Input
             ref={inputRef}
             value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
+            onChange={(e) => { setInputValue(e.target.value); window.speechSynthesis?.cancel(); }}
             placeholder="Message your wife…"
             className="message-input"
             disabled={isTyping}

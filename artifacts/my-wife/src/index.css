@@ -890,6 +890,11 @@
   background: rgba(233, 30, 99, 0.12) !important;
 }
 
+/* Voice toggle button */
+.icon-btn-voice-on {
+  color: #e91e63 !important;
+}
+
 /* ─── Photo request bar ─────────────────────────────────────────────────── */
 
 .photo-bar {
