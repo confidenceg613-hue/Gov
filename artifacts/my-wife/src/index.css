@@ -76,12 +76,14 @@
 
 @layer base {
   * { @apply border-border; box-sizing: border-box; }
-  body { @apply font-sans antialiased; margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; height: 100%; background: #0f0814; }
+  body { @apply font-sans antialiased; }
 }
 
 /* ─── App shell ─────────────────────────────────────────────────────────── */
 
 .app-shell {
+  min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
   display: flex;
@@ -151,6 +153,7 @@
   z-index: 1;
   width: 100%;
   max-width: 460px;
+  height: 100vh;
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -164,6 +167,7 @@
 
 @media (min-width: 500px) {
   .chat-card {
+    height: min(100vh, 820px);
     height: min(100dvh, 820px);
     border-radius: 28px;
     border: 1px solid rgba(255, 255, 255, 0.12);
